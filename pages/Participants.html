@@ -1,0 +1,172 @@
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Participants</title>
+        <link rel="stylesheet" href="../style.css">
+    </head>
+    <body>
+
+    <h2 style="font-size: 30px; width: fit-content;">Participants</h2>
+    <a href="../index.html">⬅ Retour</a>
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="sidebar">
+        <img src="../logo1.png" alt="Logo" style="width:200px; height:auto; margin-bottom:10px;">
+        <a href="event.html">Evenements</a>
+        <a href="Participants.html">Participants</a>
+        <a href="confer.html">Conferenciers</a>
+        <a href="salles.html">Salles</a>
+        <a href="billet.html">Billeterie</a>
+        <button id="deco">Logout</button>
+    </div>
+
+    <fieldset>
+        <legend>Informations sur l'événement</legend>
+            <form id="form">
+                <input id="nom" placeholder="Nom du participant">
+                <input id="prenom" placeholder="Prénom du participant">
+                <input id="tel" type="tel" placeholder="Téléphone">
+                <input id="mail" type="email" placeholder="Email">
+                <textarea id="adresse" placeholder="Adresse"></textarea>
+                <input id="eventnom" placeholder="Événement concerné">
+                <button type="submit">Ajouter</button>
+            </form>
+
+    </fieldset>
+
+    <br>
+
+    <input type="text" id="search" placeholder="Rechercher un participant...">
+
+    <br><br>
+
+    <table id="table" border="1" cellpadding="8" cellspacing="0"></table>
+    <script src="../script.js"></script>
+    <script>
+
+
+
+    //juste acces pour admin
+    if (localStorage.getItem("isLoggedIn") !== "true" || localStorage.getItem("role") !== "admin"
+    ) {
+        alert("t'as pas le droit")
+        window.location.href = "../login.html";
+    }
+
+    let participants = [];
+    
+    const key="participants";
+
+    async function loadParticipantsFromAPI() {
+        const res = await fetch("https://jsonplaceholder.typicode.com/users");
+        const users = await res.json();
+
+        return users.map(u => ({
+            nom: u.name.split(" ")[0],
+            prenom: u.name.split(" ")[1] || "",
+            tel: u.phone,
+            mail: u.email,
+            adresse: u.address.city,
+            eventnom: "API "
+        }));
+    }
+
+    //affchage
+    async function affichage(rechercher = "") {
+
+        if (participants.length === 0) {
+            participants = await loadParticipantsFromAPI();
+            localStorage.setItem("participantsCount", participants.length);
+        }
+
+        let h = `
+        <tr>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Téléphone</th>
+            <th>Email</th>
+            <th>Adresse</th>
+            <th>Événement</th>
+            <th>Action</th>
+        </tr>`;
+
+        participants.forEach((e, i) => {
+            if (
+                e.nom.toLowerCase().includes(rechercher.toLowerCase()) ||
+                e.prenom.toLowerCase().includes(rechercher.toLowerCase()) ||
+                e.eventnom.toLowerCase().includes(rechercher.toLowerCase())
+            ) {
+                h += `
+                <tr>
+                    <td>${e.nom}</td>
+                    <td>${e.prenom}</td>
+                    <td>${e.tel}</td>
+                    <td>${e.mail}</td>
+                    <td>${e.adresse}</td>
+                    <td>${e.eventnom}</td>
+                    <td>
+                        <button onclick="removeParticipant(${i})">Supprimer</button>
+                    </td>
+                </tr>`;
+            }
+        });
+
+        document.getElementById("table").innerHTML = h;
+    }
+
+
+    //supprimer
+    function removeParticipant(i) {
+        if (confirm("Voulez-vous vraiment supprimer ce participant ?")) {
+            participants.splice(i, 1);
+            localStorage.setItem("participantsCount", participants.length);
+            affichage(document.getElementById("search").value);
+        }
+    }
+
+    //rechercher
+    document.getElementById("search").addEventListener("input", e => {
+        affichage(e.target.value);
+    });
+
+    //logout
+    document.getElementById("deco").addEventListener("click", () => {
+        window.location.href = "../login.html";
+    });
+    //ajout
+   form.addEventListener("submit", e => {
+    e.preventDefault();
+
+    if (
+        !nom.value ||
+        !prenom.value ||
+        !tel.value ||
+        !mail.value ||
+        !adresse.value ||
+        !eventnom.value
+    ) {
+        alert("Tous les champs sont obligatoires !");
+        return;
+    }
+
+    participants.push({
+        nom: nom.value,
+        prenom: prenom.value,
+        tel: tel.value,
+        mail: mail.value,
+        adresse: adresse.value,
+        eventnom: eventnom.value
+    });
+
+    localStorage.setItem("participantsCount", participants.length);
+
+    form.reset();
+    affichage(document.getElementById("search").value);
+});
+
+
+    affichage();
+    </script>
+
+    </body>
+    </html>

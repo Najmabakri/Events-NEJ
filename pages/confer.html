@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Étudiants</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<h2 style="font-size: 30px;width: fit-content;">Conferenciers</h2>
+<a href="../index.html">⬅ Retour</a>
+<div class="menu-btn" onclick="toggleMenu()">☰</div>
+<div class="sidebar">
+<img src="../logo1.png" alt="Logo" style="width:200px; height:auto; margin-bottom:10px;">
+<a href="event.html">Evenements</a>
+<a href="Participants.html">Participants</a>
+<a href="confer.html">Conferenciers</a>
+<a href="salles.html">Salles</a>
+<a href="billet.html">Billeterie</a>
+<button id="deco">Logout</button>
+ </div>
+
+<fieldset>
+    <legend>Informations sur les conferenciers</legend>
+    <form id="form">
+        <input type="text" id="id" placeholder="id">
+        <input type="text" id="nom" placeholder="Nom">
+        <input type="text" id="bio" placeholder="Bio">
+        <input type="text" id="specialite" placeholder="Specialite">
+          <br>
+        <button>Ajouter</button>
+    </form>
+</fieldset>
+
+<br>
+<input type="text" id="search" placeholder="Rechercher un événement..." >
+
+<table id="table"></table>
+
+<button onclick="downloadCSV()">Export CSV</button>
+<button onclick="downloadPDF()">Export PDF</button>
+
+<script src="../script.js"></script>
+
+<script>
+    //juste acces pour admin
+    if (localStorage.getItem("isLoggedIn") !== "true" || localStorage.getItem("role") !== "admin"
+    ) {
+        alert("t'as pas le droit")
+        window.location.href = "../login.html";
+    }
+const key="Conferenciers";
+
+function affichage(rechercher=""){
+    let d=load(key);
+        localStorage.setItem("conferenciersCount", d.length);
+         if (!d || d.length === 0){
+        document.getElementById("table").innerHTML = "<tr><td>Aucun événement enregistré</td></tr>";
+        return;
+    }
+    let h="<tr><th>ID</th><th>Nom</th><th>Bio</th><th>Specialite</th><th>Action</th></tr>";
+    
+    d.forEach((e,i)=>{
+        // filtrage 
+
+            if(
+                e.bio.toLowerCase().includes(rechercher.toLowerCase()) ||
+                e.nom.toLowerCase().includes(rechercher.toLowerCase()) ||
+                e.id.toLowerCase().includes(rechercher.toLowerCase()) ||
+                e.specialite.toLowerCase().includes(rechercher.toLowerCase())
+            )
+
+        {
+            h += `
+            <tr>
+                <td>${e.id}</td>
+                <td>${e.nom}</td>
+                <td>${e.bio}</td>
+                <td>${e.specialite}</td>
+                <td>
+                    <button onclick="remove(${i})">Supprimer</button>
+                    <button onclick="modification(${i})">Modifier</button>
+                </td>
+            </tr>`;
+        }
+    });
+
+    h += "</tbody>";
+    document.getElementById("table").innerHTML = h;
+}
+const searchInput = document.getElementById("search");
+searchInput.addEventListener("input", ()=>{
+    affichage(searchInput.value);
+});
+
+function remove(i){
+    deleteElement(key,i);
+    affichage();
+}
+
+// Modifier un étudiant
+function modification(i){
+    let data = load(key);
+    let etu = data[i];
+
+    // Prompt pour modifier chaque champ
+    let newId = prompt("ID:", etu.id);
+    if(newId === null) return; // annuler
+    let newNom = prompt("Nom:", etu.nom);
+    if(newNom === null) return; // annuler
+    let newBio = prompt("Bio:", etu.bio);
+    if(newBio === null) return;
+    let newSpecialite = prompt("Specialite:", etu.specialite);
+    if(newSpecialite === null) return;
+    if(newMail === null) return;
+
+    let newObj = {nom: newNom, bio: newBio, specialite: newSpecialite};
+    updateElement(i, newObj);
+}
+
+// Mettre à jour un élément
+function updateElement(i, newObj){
+    let data = load(key);
+    data[i] = newObj;
+    save(key, data);
+    affichage();
+}
+
+form.onsubmit=e=>{e.preventDefault();
+    addElement(key,{id:id.value,nom:nom.value,bio:bio.value,specialite:specialite.value});
+    affichage();
+}
+affichage();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+</body>
+</html>

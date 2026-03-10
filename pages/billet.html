@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Billetterie</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<h2 style="font-size: 30px;  width: fit-content;">Billetterie</h2>
+<a href="../index.html">⬅ Retour</a>
+<div class="menu-btn" onclick="toggleMenu()">☰</div>
+<div class="sidebar">
+<img src="../logo1.png" alt="Logo" style="width:200px; height:auto; margin-bottom:10px;">
+<a href="event.html">Evenements</a>
+<a href="Participants.html">Participants</a>
+<a href="confer.html">Conferenciers</a>
+<a href="salles.html">Salles</a>
+<a href="billet.html">Billeterie</a>
+<button id="deco">Logout</button>
+ </div>
+
+<fieldset>
+    <legend>Ajouter un Billet</legend>
+    <form id="form">
+        <input type="text" id="id" placeholder="ID billet">
+        <input type="text" id="eventname" placeholder="Événement">
+        <input type="text" id="client" placeholder="Participant">
+        <input type="number" id="prix" placeholder="Prix">
+        <select id="typeticket">
+            <option value="Standard">Standard</option>
+            <option value="VIP">VIP</option>
+            <option value="Premium">Premium</option>
+        </select>
+        <br>
+        <button>Ajouter</button>
+    </form>
+</fieldset>
+
+<br>
+<input type="text" id="search" placeholder="Rechercher un événement..." >
+
+<table id="table"></table>
+
+
+<button onclick="downloadCSV()">Export CSV</button>
+<button onclick="downloadPDF()">Export PDF</button>
+
+<script src="../script.js"></script>
+
+<script>
+    //juste acces pour admin
+    if (localStorage.getItem("isLoggedIn") !== "true" || localStorage.getItem("role") !== "admin"
+    ) {
+        alert("t'as pas le droit")
+        window.location.href = "../login.html";
+    }
+    
+const key="Billets";
+
+function affichage(rechercher=""){
+    let d = load(key) || [];
+        localStorage.setItem("billetsCount", d.length);
+         if (!d || d.length === 0){
+        document.getElementById("table").innerHTML = "<tr><td>Aucun événement enregistré</td></tr>";
+        return;
+    }
+    let h = `
+        <tr>
+            <th>ID</th><th>Événement</th><th>Participant</th>
+            <th>Prix</th><th>Type</th><th>Action</th>
+        </tr>
+    `;
+    d.forEach((e,i)=>{
+        // filtrage 
+        if(
+            e.id.toLowerCase().includes(rechercher.toLowerCase()) ||
+            e.eventname.toLowerCase().includes(rechercher.toLowerCase()) ||
+            e.client.toLowerCase().includes(rechercher.toLowerCase()) ||
+            e.prix.toLowerCase().includes(rechercher.toLowerCase())
+        ){
+            h += `
+            <tr>
+                <td>${e.id}</td>
+                <td>${e.eventname}</td>
+                <td>${e.client}</td>
+                <td>${e.prix}</td>
+                <td>${e.typeticket}</td>
+                <td>
+                    <button onclick="removeTicket(${i})">Supprimer</button>
+                    <button onclick="modifier(${i})">Modifier</button>
+                </td>
+            </tr>`;
+        }
+    });
+
+    h += "</tbody>";
+    document.getElementById("table").innerHTML = h;
+}
+const searchInput = document.getElementById("search");
+searchInput.addEventListener("input", ()=>{
+    affichage(searchInput.value);
+});
+function removeTicket(i){
+    deleteElement(key,i);
+    affichage();
+}
+
+
+function modifier(i){
+    let data = load(key);
+    let t = data[i];
+
+    let newId = prompt("ID billet:", t.id);
+    if(newId===null) return;
+
+    // vérifier unicité ID billet
+    let exists = data.some((el,index)=> el.id==newId && index!=i);
+    if(exists){ alert("⚠ ID deja utilise "); return; }
+
+    let neweventname = prompt("Événement:", t.eventname);
+    if(neweventname===null) return;
+
+    let newClient = prompt("Participant:", t.client);
+    if(newClient===null) return;
+
+    let newPrix = prompt("Prix:", t.prix);
+    if(newPrix===null) return;
+
+    let newType = prompt("Type (Standard/VIP/Premium):", t.typeticket);
+    if(newType===null) return;
+
+    data[i] = {  
+        id:newId,
+        eventname:neweventname,
+        client:newClient,
+        prix:newPrix,
+        typeticket:newType
+    };
+
+    save(key,data);
+    affichage();
+}
+form.onsubmit = e =>{
+    e.preventDefault();
+
+    let data = load(key) || [];
+
+    // vérifier ID unique
+    let exists = data.some(el => el.id == id.value);
+    if(exists){
+        alert("⚠ ID existe déjà !");
+        return;
+    }
+
+    addElement(key,{
+        id:id.value,
+        eventname:eventname.value,
+        client:client.value,
+        prix:prix.value,
+        typeticket:typeticket.value
+    });
+    form.reset();
+    affichage();
+}
+
+affichage();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+
+</body>
+</html>

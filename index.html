@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestion evenements</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+<div class="sidebar">
+    <img src="logo1.png" alt="Logo" style="width:200px; height:auto; margin-bottom:10px;">
+    <a href="pages/event.html" data-i18n="link_events">Evenements</a>
+    <a href="pages/Participants.html" data-i18n="link_participants">Participants</a>
+    <a href="pages/confer.html" data-i18n="link_speakers">Conferenciers</a>
+    <a href="pages/salles.html" data-i18n="link_rooms">Salles</a>
+    <a href="pages/billet.html" data-i18n="link_tickets">Billeterie</a>
+
+    <div >
+        <button onclick="setLanguage('fr')" style="background: url(france.webp);background-size: cover;" ></button>
+        <button onclick="setLanguage('en')" style="background: url(uk.webp);background-size: cover;" ></button>
+    </div>
+
+    <button id="deco" data-i18n="logout">Logout</button>
+</div>
+
+<h2 style="font-size: 30px;width: fit-content;" id="dashboard-title">Tableau de bord</h2>
+
+<div class="cards">
+    <a href="pages/Participants.html"><div class="card1" id="card-participants">Total participants :<br> <span id="count"></span></div></a>
+    <a href="pages/event.html"><div class="card1" id="card-events">Total evenements :<br> <span id="count2"></span></div></a>
+    <a href="pages/confer.html"><div class="card1" id="card-speakers">Total conférenciers:<br> <span id="count3"></span></div></a>
+    <a href="pages/salles.html"><div class="card1" id="card-rooms">Total des salles :<br> <span id="count4"></span></div></a>
+    <a href="pages/billet.html"><div class="card1" id="card-tickets">Total des billets :<br> <span id="count5"></span></div></a>
+</div>
+
+<div style="width:50%; margin-left:260px; margin-top:30px;">
+    <canvas id="myChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
+<script>
+//verif login
+ if (localStorage.getItem("isLoggedIn") !== "true") {
+        window.location.href = "login.html";
+    }
+
+// Récupérer les données depuis localStorage
+let participants = Number(localStorage.getItem("participantsCount")) || 0;
+let events = Number(localStorage.getItem("evenementsCount")) || 0;
+let confer = Number(localStorage.getItem("conferenciersCount")) || 0;
+let salles = Number(localStorage.getItem("sallesCount")) || 0;
+let billets = Number(localStorage.getItem("billetsCount")) || 0;
+
+document.getElementById("count").innerText = participants;
+document.getElementById("count2").innerText = events;
+document.getElementById("count3").innerText = confer;
+document.getElementById("count4").innerText = salles;
+document.getElementById("count5").innerText = billets;
+
+const ctx = document.getElementById('myChart');
+const myChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+        labels: ['Participants','Événements','Conférenciers','Salles','Billets'],
+        datasets: [{
+            label: 'Statistiques des données',
+            data: [participants, events, confer, salles, billets],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        animation: {
+            duration: 3000,
+            easing: 'easeOutBounce'
+        }
+    }
+});
+
+// Déconnexion
+document.getElementById("deco").addEventListener('click', function() {
+    window.location.href = 'login.html';
+});
+
+// Traductions
+const translations = {
+    fr: {
+        dashboard_title: "Tableau de bord",
+        participants: "Total participants",
+        events: "Total événements",
+        conferenciers: "Total conférenciers",
+        salles: "Total des salles",
+        billets: "Total des billets",
+        chart_labels: ["Participants","Événements","Conférenciers","Salles","Billets"],
+        logout: "Logout",
+        link_events: "Événements",
+        link_participants: "Participants",
+        link_speakers: "Conférenciers",
+        link_rooms: "Salles",
+        link_tickets: "Billeterie"
+    },
+    en: {
+        dashboard_title: "Dashboard",
+        participants: "Total participants",
+        events: "Total events",
+        conferenciers: "Total speakers",
+        salles: "Total rooms",
+        billets: "Total tickets",
+        chart_labels: ["Participants","Events","Speakers","Rooms","Tickets"],
+        logout: "Logout",
+        link_events: "Events",
+        link_participants: "Participants",
+        link_speakers: "Speakers",
+        link_rooms: "Rooms",
+        link_tickets: "Tickets"
+    }
+};
+
+// Fonction pour changer la langue
+function setLanguage(lang) {
+    document.getElementById('dashboard-title').textContent = translations[lang].dashboard_title;
+
+    document.getElementById('card-participants').innerHTML = `${translations[lang].participants} :<br> <span id="count">${participants}</span>`;
+    document.getElementById('card-events').innerHTML = `${translations[lang].events} :<br> <span id="count2">${events}</span>`;
+    document.getElementById('card-speakers').innerHTML = `${translations[lang].conferenciers} :<br> <span id="count3">${confer}</span>`;
+    document.getElementById('card-rooms').innerHTML = `${translations[lang].salles} :<br> <span id="count4">${salles}</span>`;
+    document.getElementById('card-tickets').innerHTML = `${translations[lang].billets} :<br> <span id="count5">${billets}</span>`;
+
+    // Mettre à jour le graphique
+    myChart.data.labels = translations[lang].chart_labels;
+    myChart.update();
+
+    // Sidebar links
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = translations[lang][key];
+    });
+
+    // Sauvegarder la langue
+    localStorage.setItem('lang', lang);
+}
+
+// Charger la langue sauvegardée
+const userLang = localStorage.getItem('lang') || 'fr';
+setLanguage(userLang);
+</script>
+
+</body>
+</html>

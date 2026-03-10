@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Event</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<h2 style="font-size: 30px;width: fit-content;">Événements</h2>
+
+<a href="../index.html">⬅ Retour</a>
+<div class="menu-btn" onclick="toggleMenu()">☰</div>
+<div class="sidebar">
+<img src="../logo1.png" alt="Logo" style="width:200px; height:auto; margin-bottom:10px;">
+<a href="event.html">Evenements</a>
+<a href="Participants.html">Participants</a>
+<a href="confer.html">Conferenciers</a>
+<a href="salles.html">Salles</a>
+<a href="billet.html">Billeterie</a>
+<button id="deco">Logout</button>
+ </div>
+
+<fieldset>
+    <legend>Informations sur l'événement</legend>
+    <form id="form">
+        <input id="eventnom" placeholder="Nom de l'événement">
+        <input id="lieu" placeholder="Lieu de l'événement">
+        <textarea placeholder="Description" id="description"></textarea>
+        <input type="date" id="date">
+          <br>
+        <button>Ajouter</button>
+    </form>
+</fieldset>
+<br>
+<input type="text" id="search" placeholder="Rechercher un événement..." >
+
+
+<br>
+
+<table id="table"></table>
+
+<button onclick="downloadCSV()">Export CSV</button>
+<button onclick="downloadPDF()">Export PDF</button>
+
+<script src="../script.js"></script>
+<script>
+    //juste acces pour admin
+    if (localStorage.getItem("isLoggedIn") !== "true" || localStorage.getItem("role") !== "admin"
+    ) {
+        alert("t'as pas le droit")
+        window.location.href = "../login.html";
+    }
+    
+const key="evenements";
+
+function affichage(rechercher=""){
+    let d = load(key);
+     localStorage.setItem("evenementsCount", d.length); 
+    if (!d || d.length === 0){
+        document.getElementById("table").innerHTML = "<tr><td>Aucun événement enregistré</td></tr>";
+        return;
+    }
+
+    let h = `
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Lieu</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Action</th>
+        </tr>
+    </thead><tbody>
+    `;
+
+    d.forEach((e,i)=>{
+        // filtrage 
+        if(
+            e.eventnom.toLowerCase().includes(rechercher.toLowerCase()) ||
+            e.lieu.toLowerCase().includes(rechercher.toLowerCase()) ||
+            e.description.toLowerCase().includes(rechercher.toLowerCase())
+        ){
+            h += `
+            <tr>
+                <td>${e.eventnom}</td>
+                <td>${e.lieu}</td>
+                <td>${e.description}</td>
+                <td>${e.date}</td>
+                <td>
+                    <button onclick="removeEvent(${i})">Supprimer</button>
+                    <button onclick="modification(${i})">Modifier</button>
+                </td>
+            </tr>`;
+        }
+    });
+
+    h += "</tbody>";
+    document.getElementById("table").innerHTML = h;
+}
+const searchInput = document.getElementById("search");
+searchInput.addEventListener("input", ()=>{
+    affichage(searchInput.value);
+});
+
+
+function removeEvent(i){
+    if (!confirm("Voulez-vous vraiment supprimer cet événement ?")) {
+        return;
+    }
+
+    deleteElement(key, i);
+    affichage();
+}
+
+function modification(i){
+    let data = load(key);
+    let ev = data[i];
+
+    let newNom = prompt("Nom :", ev.eventnom);
+    if(newNom === null) return;
+
+    let newLieu = prompt("Lieu :", ev.lieu);
+    if(newLieu === null) return;
+
+    let newDesc = prompt("Description :", ev.description);
+    if(newDesc === null) return;
+
+    let newDate = prompt("Date de l'événement (YYYY-MM-DD) :", ev.date);
+    if(newDate === null) return;
+
+    let newObj = {eventnom:newNom, lieu:newLieu, description:newDesc, date:newDate};
+    updateElement(i,newObj);
+}
+
+function updateElement(i,newObj){
+    let data = load(key);
+    data[i] = newObj;
+    save(key,data);
+    affichage();
+}
+
+form.onsubmit = e=>{
+    e.preventDefault();
+    if(!eventnom.value || !lieu.value || !description.value || !date.value){
+        alert("Tous les champs sont obligatoires !");
+        return;
+    }
+    addElement(key,{eventnom:eventnom.value,lieu:lieu.value,description:description.value,date:date.value});
+    form.reset();
+    affichage();
+}
+
+affichage();
+</script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+</body>
+</html>

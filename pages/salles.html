@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Salles</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<h2 style="font-size: 30px; width: fit-content;">Salles</h2>
+<a href="../index.html">⬅ Retour</a>
+<div class="menu-btn" onclick="toggleMenu()">☰</div>
+<div class="sidebar">
+<img src="../logo1.png" alt="Logo" style="width:200px; height:auto; margin-bottom:10px;">
+<a href="event.html">Evenements</a>
+<a href="Participants.html">Participants</a>
+<a href="confer.html">Conferenciers</a>
+<a href="salles.html">Salles</a>
+<a href="billet.html">Billeterie</a>
+<button id="deco">Logout</button>
+ </div>
+
+<fieldset>
+    <legend>Informations sur les Salles</legend>
+    <form id="form">
+        <input type="text" id="id" placeholder="ID" required>
+        <input type="text" id="nom" placeholder="Nom" required>
+        <input type="number" id="capacite" placeholder="Capacité" required>
+        <input type="text" id="localisation" placeholder="Localisation" required>
+        <br>
+        <button type="submit">Ajouter</button>
+    </form>
+</fieldset>
+<br>
+<input type="text" id="search" placeholder="Rechercher un événement..." >
+
+
+<table id="table"></table>
+<button onclick="downloadCSV()">Export CSV</button>
+<button onclick="downloadPDF()">Export PDF</button>
+
+<script src="../script.js"></script>
+<script>
+    //juste acces pour admin
+    if (localStorage.getItem("isLoggedIn") !== "true" || localStorage.getItem("role") !== "admin"
+    ) {
+        alert("t'as pas le droit")
+        window.location.href = "../login.html";
+    }
+const key = "Salles";
+
+function affichage(rechercher="") {
+    let d = load(key) ;
+    localStorage.setItem("sallesCount", d.length); 
+
+    if (!d || d.length === 0){
+        document.getElementById("table").innerHTML = "<tr><td>Aucun événement enregistré</td></tr>";
+        return;
+    }
+
+    let h = `
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>Capacite</th>
+            <th>Localisation</th>
+            <th>Action</th>
+        </tr>
+    </thead><tbody>
+    `;
+
+    d.forEach((e,i)=>{
+        // filtrage 
+        if(
+            e.nom.toLowerCase().includes(rechercher.toLowerCase()) ||
+            e.localisation.toLowerCase().includes(rechercher.toLowerCase()) ||
+            e.id.toLowerCase().includes(rechercher.toLowerCase()) ||
+            e.capacite.toLowerCase().includes(rechercher.toLowerCase())
+        ){
+            h += `
+            <tr>
+                <td>${e.id}</td>
+                <td>${e.nom}</td>
+                <td>${e.capacite}</td>
+                <td>${e.localisation}</td>
+                <td>
+                    <button onclick="removeEvent(${i})">Supprimer</button>
+                    <button onclick="modification(${i})">Modifier</button>
+                </td>
+            </tr>`;
+        }
+    });
+
+    h += "</tbody>";
+    document.getElementById("table").innerHTML = h;
+}
+
+const searchInput = document.getElementById("search");
+searchInput.addEventListener("input", ()=>{
+    affichage(searchInput.value);
+});
+
+
+function removeEvent(i){
+    if (!confirm("Voulez-vous vraiment supprimer cet événement ?")) {
+        return;
+    }
+
+    deleteElement(key, i);
+    affichage();
+}
+
+function modification(i){
+    let data = load(key);
+    let salle = data[i];
+
+    let newId = prompt("ID:", salle.id);
+    if(newId === null) return;
+
+    let exists = data.some((el, index) => el.id == newId && index != i);
+    if(exists){
+        alert("Cet ID est déjà utilisé !");
+        return;
+    }
+
+    let newNom = prompt("Nom:", salle.nom);
+    if(newNom === null) return;
+
+    let newCapacite = prompt("Capacité:", salle.capacite);
+    if(newCapacite === null) return;
+
+    let newLocalisation = prompt("Localisation:", salle.localisation);
+    if(newLocalisation === null) return;
+
+    data[i] = {
+        id: newId,
+        nom: newNom,
+        capacite: newCapacite,
+        localisation: newLocalisation
+    };
+
+    save(key, data);
+    affichage();
+}
+
+function updateElement(i, newObj){
+    let data = load(key);
+    data[i] = newObj;
+    save(key, data);
+    affichage();
+}
+
+document.getElementById("form").onsubmit = e => {
+    e.preventDefault();
+    
+    let data = load(key) || [];
+    
+    let exists = data.some(el => el.id == document.getElementById("id").value);
+    if (exists) {
+        alert("Cet ID existe déjà. Veuillez entrer un autre ID.");
+        return;
+    }
+
+    addElement(key, {
+        id: document.getElementById("id").value,
+        nom: document.getElementById("nom").value,
+        capacite: document.getElementById("capacite").value,
+        localisation: document.getElementById("localisation").value
+    });
+    form.reset();
+    affichage();
+}
+
+affichage();
+</script>
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</body>
+</html>
